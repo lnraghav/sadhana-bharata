@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sādhana Bhārata</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#8b6f47">
+
+<style>
+body{
+font-family:-apple-system,Arial;
+background:#f4f0e6;
+margin:0;
+padding:20px;
+}
+h1,h2{text-align:center;}
+.section{margin-top:30px;}
+.card{
+background:#8b6f47;
+color:white;
+padding:18px;
+margin:12px 0;
+border-radius:14px;
+font-size:18px;
+text-align:center;
+}
+button{
+width:100%;
+padding:16px;
+font-size:18px;
+border-radius:12px;
+border:none;
+background:#6b5536;
+color:white;
+margin-top:10px;
+}
+input{width:60px;}
+#count{font-size:60px;text-align:center;}
+.small{font-size:14px;color:#333;text-align:center;margin-top:8px;}
+</style>
+</head>
+
+<body>
+
+<h1>Sādhana Bhārata</h1>
+
+<div class="section">
+<h2>Dinācārya Nirdeśa</h2>
+Age <input type="number" id="age" value="40">
+Stress <input type="number" id="stress" value="5">
+Energy <input type="number" id="energy" value="6">
+Calmness <input type="number" id="calmness" value="5">
+<button onclick="App.runEngine()">Generate Daily Target</button>
+<div id="prescription" class="small"></div>
+</div>
+
+<div class="section">
+<h2>Japa Mandira</h2>
+<div id="count">0</div>
+<button onclick="App.tap()">Tap</button>
+<button onclick="App.reset()">Reset</button>
+<button onclick="App.playBell()">Bell</button>
+</div>
+
+<div class="section">
+<h2>Bhakti</h2>
+<div class="card" onclick="App.openLink('https://archive.org/details/BhajaGovindam')">
+Bhaja Govindam (Audio)
+</div>
+<div class="card" onclick="App.openLink('https://archive.org/details/SaundaryaLahari')">
+Saundarya Lahari
+</div>
+</div>
+
+<div class="section">
+<h2>Itihāsa</h2>
+<div class="card" onclick="App.openLink('https://www.sacred-texts.com/hin/rama/')">Ramayana</div>
+<div class="card" onclick="App.openLink('https://www.sacred-texts.com/hin/maha/')">Mahabharata</div>
+<div class="card" onclick="App.openLink('https://www.sacred-texts.com/hin/sbh/')">Bhagavata</div>
+</div>
+
+<div class="section">
+<h2>Vedānta</h2>
+<div class="card" onclick="App.openLink('https://www.sacred-texts.com/hin/gita/')">Gita</div>
+<div class="card" onclick="App.openLink('https://www.sacred-texts.com/hin/shank/')">Shankara Works</div>
+</div>
+
+<div class="section">
+<h2>Antar Darpaṇa</h2>
+SSI: <span id="ssi">0</span><br>
+Streak: <span id="streak">0</span><br>
+Burnout: <span id="burnout">0</span>
+</div>
+
+<audio id="bellSound" preload="auto">
+<source src="https://upload.wikimedia.org/wikipedia/commons/4/45/Temple_bell.ogg" type="audio/ogg">
+</audio>
+
+<script>
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('sw.js');
+}
+
+const App={
+state:{
+count:0,
+target:54,
+streak:parseInt(localStorage.getItem("streak"))||0,
+lastDate:localStorage.getItem("date")||""
+},
+
+today(){
+return new Date().toISOString().slice(0,10);
+},
+
+runEngine(){
+const age=Math.min(120,Math.max(0,+age.value||0));
+const stress=Math.min(10,Math.max(0,+stress.value||0));
+const energy=Math.min(10,Math.max(0,+energy.value||0));
+const calm=Math.min(10,Math.max(0,+calmness.value||0));
+
+let target=54;
+if(age>55)target=27;
+if(stress>7)target*=0.6;
+if(energy<4)target=27;
+if(calm>8&&this.state.streak>5)target*=1.2;
+if(this.state.streak!==0&&this.state.streak%7===0)target=27;
+
+this.state.target=Math.round(target);
+
+const burnout=Math.max(0,(target/108)+(stress/10)-(energy/10));
+const ssi=(this.state.streak*0.3)+(calm*0.4)+((10-stress)*0.3);
+
+prescription.innerText="Today's Japa Target: "+this.state.target;
+ssi.innerText=ssi.toFixed(2);
+streak.innerText=this.state.streak;
+burnout.innerText=burnout.toFixed(2);
+},
+
+tap(){
+if(this.state.lastDate!==this.today()){
+this.state.count=0;
+this.state.lastDate=this.today();
+localStorage.setItem("date",this.today());
+}
+this.state.count++;
+count.innerText=this.state.count;
+this.playBell();
+
+if(this.state.count===this.state.target){
+this.state.streak++;
+localStorage.setItem("streak",this.state.streak);
+streak.innerText=this.state.streak;
+}
+},
+
+reset(){
+this.state.count=0;
+count.innerText=0;
+},
+
+playBell(){
+const bell=document.getElementById("bellSound");
+bell.currentTime=0;
+bell.play().catch(()=>{});
+},
+
+openLink(url){
+window.open(url,'_blank');
+}
+};
+
+App.runEngine();
+</script>
+
+</body>
+</html>
